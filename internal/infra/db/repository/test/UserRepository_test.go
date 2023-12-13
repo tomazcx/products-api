@@ -15,7 +15,9 @@ func TestCreateUser(t *testing.T) {
 	assert.Nil(t, err)
 
 	db.AutoMigrate(&entity.User{})
-	user, _ := entity.NewUser("John Doe", "john@email.com", "1234")
+	user, err := entity.NewUser("John Doe", "john@email.com", "1234")
+	assert.Nil(t, err)
+
 	userRepository := repository.NewUserRepository(db)
 	err = userRepository.Create(user)
 	assert.Nil(t, err)
@@ -35,7 +37,9 @@ func TestFindByEmail(t *testing.T) {
 	assert.Nil(t, err)
 
 	db.AutoMigrate(&entity.User{})
-	user, _ := entity.NewUser("John Doe", "john@email.com", "1234")
+	user, err := entity.NewUser("John Doe", "john@email.com", "1234")
+	assert.Nil(t, err)
+
 	err = db.Create(user).Error
 	assert.Nil(t, err)
 
