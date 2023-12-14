@@ -17,7 +17,7 @@ func (uc ShowManyProductsUseCase) Execute(page, limit int, sort string) ([]entit
 	products, err := uc.Repository.FindAll(page, limit, sort)
 
 	if err != nil {
-		return nil, err
+		return []entity.Product{}, err
 	}
 
 	return products, nil
