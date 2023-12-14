@@ -1,6 +1,7 @@
 package test
 
 import (
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,11 +11,28 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestCreateUser(t *testing.T) {
+func setupTestUserRepository() (func(db *gorm.DB), *gorm.DB) {
 	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
-	assert.Nil(t, err)
-
+	if err != nil {
+		panic("failed to connect database")
+	}
 	db.AutoMigrate(&entity.User{})
+
+	return func(db *gorm.DB) {
+		sqlDB, err := db.DB()
+
+		if err != nil {
+			log.Fatalf("Failed to get the database coonection")
+		}
+
+		sqlDB.Close()
+	}, db
+}
+
+func TestCreateUser(t *testing.T) {
+	teardown, db := setupTestUserRepository()
+	defer teardown(db)
+
 	user, err := entity.NewUser("John Doe", "john@email.com", "1234")
 	assert.Nil(t, err)
 
@@ -33,10 +51,9 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestFindByEmail(t *testing.T) {
-	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
-	assert.Nil(t, err)
+	teardown, db := setupTestUserRepository()
+	defer teardown(db)
 
-	db.AutoMigrate(&entity.User{})
 	user, err := entity.NewUser("John Doe", "john@email.com", "1234")
 	assert.Nil(t, err)
 

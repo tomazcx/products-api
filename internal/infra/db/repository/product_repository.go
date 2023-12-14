@@ -13,9 +13,30 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 	return &ProductRepository{DB: db}
 }
 
+func (p *ProductRepository) Exists(id string) bool {
+	var product entity.Product
+	err := p.DB.First(&product, "id = ?", id).Error
+	return err == nil
+}
+
+func (p *ProductRepository) FindAll(page, limit int, sort string) ([]entity.Product, error) {
+	if sort != "" && sort != "asc" && sort != "desc" {
+		sort = "asc"
+	}
+
+	var products []entity.Product
+	err := p.DB.Limit(limit).Offset((page - 1) * limit).Order("created_at " + sort).Find(&products).Error
+
+	if err != nil {
+		return []entity.Product{}, nil
+	}
+
+	return products, err
+}
+
 func (p *ProductRepository) FindById(id string) (*entity.Product, error) {
 	var product entity.Product
-	err := p.DB.First(&product).Where("id = ?", id).Error
+	err := p.DB.First(&product, "id = ?", id).Error
 
 	if err != nil {
 		return nil, err
