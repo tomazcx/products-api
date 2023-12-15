@@ -12,4 +12,5 @@ func NewAppRouter(r *chi.Mux) *AppRouter {
 
 func (a *AppRouter) DefineRoutes() {
 	UseProductRoutes(a.r)
+	UseUserRoutes(a.r)
 }
