@@ -24,6 +24,10 @@ git clone https://github.com/tomazcx/odonto-dashboard-go.git
 docker-compose up
 ```
 
+## Swagger Docs
+
+All the api endpoints are documented with swagger. You can access it at /docs/index.html
+
 ## Testing
 
 Run the following command in the root of the project to execute all the application tests:
