@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/tomazcx/products-api/configs"
+	"github.com/go-chi/jwtauth"
 	"github.com/tomazcx/products-api/internal/data/factory"
 	"github.com/tomazcx/products-api/internal/dto"
 	"github.com/tomazcx/products-api/internal/infra/http/utils"
@@ -20,11 +20,23 @@ func NewUserHandler(factory factory.UserFactory) *UserHandler {
 	return &UserHandler{factory: factory}
 }
 
+// ShowAccount godoc
+// @Summary      Show an account
+// @Description  Get user data by email
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        email   path   string  true  "Account Email"
+// @Success      200
+// @Failure      400
+// @Failure      404
+// @Failure      500
+// @Router       /users/{email} [get]
 func (h *UserHandler) GetByEmail(w http.ResponseWriter, r *http.Request) {
 	email := chi.URLParam(r, "email")
 
 	if email == "" {
-		http.Error(w, "Error: invalid email", http.StatusUnprocessableEntity)
+		http.Error(w, "Error: invalid email", http.StatusBadRequest)
 		return
 	}
 
@@ -73,6 +85,9 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
+	jwt := r.Context().Value("jwt").(*jwtauth.JWTAuth)
+	exp := r.Context().Value("exp").(int)
+
 	var authDTO dto.AuthDTO
 	err := json.NewDecoder(r.Body).Decode(&authDTO)
 
@@ -89,8 +104,7 @@ func (h *UserHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	config := configs.GetConfig()
-	token, _ := utils.GenerateJWT(authDTO.Email, config.JWTExpiresIn, config.TokenAuth)
+	token, _ := utils.GenerateJWT(authDTO.Email, exp, jwt)
 
 	accessToken := struct {
 		AccessToken string `json:"access_token"`
