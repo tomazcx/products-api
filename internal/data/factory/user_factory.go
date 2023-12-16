@@ -19,3 +19,9 @@ func (f UserFactory) CreateUserUseCase() *usecase.CreateUserUseCase {
 	repo := repository.NewUserRepository(db)
 	return &usecase.CreateUserUseCase{Repository: repo}
 }
+
+func (f UserFactory) AuthUserUseCase() *usecase.AuthUserUseCase {
+	db := configs.GetDBInstance()
+	repo := repository.NewUserRepository(db)
+	return &usecase.AuthUserUseCase{Repository: repo}
+}

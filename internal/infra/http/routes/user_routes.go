@@ -12,4 +12,5 @@ func UseUserRoutes(r *chi.Mux) {
 
 	r.Get("/users/{email}", userHandler.GetByEmail)
 	r.Post("/users", userHandler.Create)
+	r.Post("/users/login", userHandler.Authenticate)
 }

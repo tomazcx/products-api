@@ -15,6 +15,13 @@ type CreateUserUseCase struct {
 }
 
 func (uc *CreateUserUseCase) Execute(dto dto.UserDTO) (*entity.User, error) {
+
+	_, err := uc.Repository.FindByEmail(dto.Email)
+
+	if err == nil {
+		return nil, httperr.NewHttpError("Email already registered", http.StatusConflict)
+	}
+
 	user, err := entity.NewUser(dto.Name, dto.Email, dto.Password)
 
 	if err != nil {

@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/tomazcx/products-api/configs"
 	"github.com/tomazcx/products-api/internal/data/factory"
 	"github.com/tomazcx/products-api/internal/dto"
+	"github.com/tomazcx/products-api/internal/infra/http/utils"
 	"github.com/tomazcx/products-api/pkg/httperr"
 )
 
@@ -68,4 +70,35 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
+}
+
+func (h *UserHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
+	var authDTO dto.AuthDTO
+	err := json.NewDecoder(r.Body).Decode(&authDTO)
+
+	if err != nil {
+		http.Error(w, "Invalid json", http.StatusUnprocessableEntity)
+		return
+	}
+
+	authUserUseCase := h.factory.AuthUserUseCase()
+	isCredentialsValid := authUserUseCase.Execute(authDTO)
+
+	if !isCredentialsValid {
+		http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
+		return
+	}
+
+	config := configs.GetConfig()
+	token, _ := utils.GenerateJWT(authDTO.Email, config.JWTExpiresIn, config.TokenAuth)
+
+	accessToken := struct {
+		AccessToken string `json:"access_token"`
+	}{
+		AccessToken: token,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(accessToken)
 }
