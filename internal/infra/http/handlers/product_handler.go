@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -20,6 +21,20 @@ func NewProductHandler(factory factory.ProductFactory) *ProductHandler {
 	return &ProductHandler{factory: factory}
 }
 
+// Get Many Products godoc
+// @Summary      Get many products with pagination
+// @Description  Send the desired page, limit and sort operation to list the products.
+// @Tags         Products
+// @Accept       json
+// @Produce      json
+// @Param        page   query   int  true  "Page"
+// @Param        limit   query   int  true  "Limit"
+// @Param        sort   query   string  true  "Sort"
+// @Success      200 {object} []entity.Product
+// @Failure      400
+// @Failure      500
+// @Router       /products [get]
+// @Security BearerAuth
 func (h *ProductHandler) GetManyProducts(w http.ResponseWriter, r *http.Request) {
 	page := r.URL.Query().Get("page")
 	limit := r.URL.Query().Get("limit")
@@ -61,6 +76,19 @@ func (h *ProductHandler) GetManyProducts(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(products)
 }
 
+// Get Product godoc
+// @Summary      Get a product data based on the ID
+// @Description  Send the product ID to retrieve all its data.
+// @Tags         Products
+// @Accept       json
+// @Produce      json
+// @Param        id   path   string  true  "ID"
+// @Success      200 {object} entity.Product
+// @Failure      404
+// @Failure      400
+// @Failure      500
+// @Router       /products/{id} [get]
+// @Security BearerAuth
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -93,6 +121,19 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
+// Create Product godoc
+// @Summary      Create a product entity
+// @Description  Send the product data to register it in the database.
+// @Tags         Products
+// @Accept       json
+// @Produce      json
+// @Param        request   body   dto.ProductDTO  true  "Product Data"
+// @Success      201 {object} entity.Product
+// @Failure      422
+// @Failure      400
+// @Failure      500
+// @Router       /products [post]
+// @Security BearerAuth
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var createProductDTO dto.ProductDTO
 
@@ -116,10 +157,25 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Location", fmt.Sprintf("/products/%s", product.ID))
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(product)
 }
 
+// Update Product godoc
+// @Summary      Update the product data
+// @Description  Send the product data and its ID to update.
+// @Tags         Products
+// @Accept       json
+// @Produce      json
+// @Param        request   body   dto.ProductDTO  true  "Product Data"
+// @Param        id   path   string true  "Product ID"
+// @Success      204
+// @Failure      422
+// @Failure      400
+// @Failure      500
+// @Router       /products/{id} [put]
+// @Security BearerAuth
 func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -160,6 +216,18 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// Delete Product godoc
+// @Summary      Delete the product data
+// @Description  Send the product ID to delete it.
+// @Tags         Products
+// @Accept       json
+// @Produce      json
+// @Param        id   path   string true  "Product ID"
+// @Success      204
+// @Failure      400
+// @Failure      500
+// @Router       /products/{id} [delete]
+// @Security BearerAuth
 func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

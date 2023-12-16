@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/jwtauth"
 	"github.com/tomazcx/products-api/internal/data/factory"
 	"github.com/tomazcx/products-api/internal/dto"
@@ -20,43 +20,17 @@ func NewUserHandler(factory factory.UserFactory) *UserHandler {
 	return &UserHandler{factory: factory}
 }
 
-// ShowAccount godoc
-// @Summary      Show an account
-// @Description  Get user data by email
-// @Tags         users
+// CreateUser godoc
+// @Summary      Create an user
+// @Description  Create an user
+// @Tags         Users
 // @Accept       json
 // @Produce      json
-// @Param        email   path   string  true  "Account Email"
-// @Success      200
-// @Failure      400
-// @Failure      404
+// @Param        request   body   dto.UserDTO  true  "Create User DTO"
+// @Success      201 {object} entity.User
+// @Failure      422
 // @Failure      500
-// @Router       /users/{email} [get]
-func (h *UserHandler) GetByEmail(w http.ResponseWriter, r *http.Request) {
-	email := chi.URLParam(r, "email")
-
-	if email == "" {
-		http.Error(w, "Error: invalid email", http.StatusBadRequest)
-		return
-	}
-
-	findUserByEmailUseCase := h.factory.FindUserByEmailUseCase()
-	user, err := findUserByEmailUseCase.Execute(email)
-
-	if err != nil {
-		if httpErr, ok := err.(*httperr.HttpError); ok {
-			http.Error(w, httpErr.Message, httpErr.StatusCode)
-			return
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
-}
-
+// @Router       /users [post]
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var createUserDTO dto.UserDTO
 
@@ -80,10 +54,22 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Location", fmt.Sprintf("/users/%s", createUserDTO.Email))
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
 }
 
+// Authenticate godoc
+// @Summary      Authenticate
+// @Description  Authenticate with email and password to get a token
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        request   body   dto.AuthDTO  true  "Auth  DTO"
+// @Success      200 {object} dto.AccessTokenDTO
+// @Failure      401
+// @Failure      500
+// @Router       /users/login [post]
 func (h *UserHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	jwt := r.Context().Value("jwt").(*jwtauth.JWTAuth)
 	exp := r.Context().Value("exp").(int)
@@ -106,9 +92,7 @@ func (h *UserHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 
 	token, _ := utils.GenerateJWT(authDTO.Email, exp, jwt)
 
-	accessToken := struct {
-		AccessToken string `json:"access_token"`
-	}{
+	accessToken := dto.AccessTokenDTO{
 		AccessToken: token,
 	}
 

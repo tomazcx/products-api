@@ -10,7 +10,6 @@ func UseUserRoutes(r *chi.Mux) {
 	factory := factory.UserFactory{}
 	userHandler := handlers.NewUserHandler(factory)
 
-	r.Get("/users/{email}", userHandler.GetByEmail)
 	r.Post("/users", userHandler.Create)
 	r.Post("/users/login", userHandler.Authenticate)
 }
